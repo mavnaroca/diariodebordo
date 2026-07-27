@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Meu Diário de Bordo</title>
+<style>
+  :root{
+    --ink-dark:#1c2b33;
+    --teal:#0e7c7b;
+    --teal-dark:#0a5f5e;
+    --teal-light:#e3f3f2;
+    --sand:#f6f4ef;
+    --card:#ffffff;
+    --line:#e7ebee;
+    --muted:#7c8a92;
+    --verde:#2f9e5b;
+    --vermelho:#c14a4a;
+    --amarelo:#c98a1e;
+    --roxo:#8a6fc7;
+    --roxo-escuro:#5b3f96;
+    --shadow:0 4px 14px rgba(20,40,45,0.08);
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--sand); color:var(--ink-dark);
+    padding-bottom:48px;
+  }
+  header{
+    background:linear-gradient(135deg,var(--teal-dark),var(--teal));
+    color:#fff; padding:18px 16px 16px;
+    box-shadow:var(--shadow);
+  }
+  .header-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .header-title{margin:0; font-size:1.1rem; font-weight:bold; letter-spacing:.3px; display:flex; align-items:center; gap:8px;}
+  .header-badge{
+    font-size:.68rem; background:rgba(255,255,255,.18); padding:3px 9px; border-radius:12px;
+    display:inline-flex; align-items:center; gap:4px; white-space:nowrap;
+  }
+  #status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f2c94c;}
+  #status-dot.ok{background:#7ee0a8;}
+  #status-dot.err{background:#f28b82;}
+
+  .day-nav{
+    display:flex; align-items:center; justify-content:space-between; margin-top:14px;
+    background:rgba(255,255,255,.14); border-radius:12px; padding:6px 6px;
+  }
+  .day-nav button{
+    background:rgba(255,255,255,.18); border:none; color:#fff; width:34px; height:34px; border-radius:9px;
+    font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .day-nav button:active{background:rgba(255,255,255,.3);}
+  .day-label{flex:1; text-align:center; font-size:.92rem; font-weight:bold;}
+  .day-label .hoje-tag{display:block; font-size:.68rem; font-weight:normal; opacity:.85; margin-top:1px;}
+
+  details.settings{margin:10px 4px 0; font-size:.75rem; color:rgba(255,255,255,.75);}
+  details.settings summary{cursor:pointer;}
+  details.settings input{width:100%; padding:8px; border-radius:6px; border:1px solid #cdd7e1; margin-top:6px; font-family:inherit; color:#222;}
+  details.settings .save-url{margin-top:6px; padding:8px 12px; border:none; border-radius:6px; background:#fff; color:var(--teal-dark); font-weight:bold; cursor:pointer;}
+
+  main{padding:14px 12px 12px; max-width:520px; margin:0 auto;}
+
+  .resumo-card{
+    background:var(--card); border-radius:14px; padding:14px 10px; box-shadow:var(--shadow); margin-bottom:14px;
+    display:flex; align-items:center; justify-content:space-around; gap:6px;
+  }
+  .resumo-item{display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .resumo-ring{
+    width:50px; height:50px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
+    font-size:.76rem; font-weight:bold; color:var(--teal-dark);
+    background:conic-gradient(var(--verde) calc(var(--pct,0)*1%), var(--line) 0);
+    position:relative;
+  }
+  .resumo-ring::before{content:''; position:absolute; inset:5px; border-radius:50%; background:var(--card);}
+  .resumo-ring span{position:relative; z-index:1;}
+  .resumo-ring-total{width:60px; height:60px; font-size:.85rem;}
+  .resumo-ring-total::before{inset:6px;}
+  .resumo-label{font-size:.7rem; color:var(--muted); font-weight:bold;}
+  .resumo-item-total .resumo-label{color:var(--ink-dark);}
+
+  section.card{
+    background:var(--card); border-radius:14px; padding:14px; box-shadow:var(--shadow); margin-bottom:14px;
+    border-top:4px solid transparent;
+  }
+  section.card h2{
+    margin:0 0 10px; font-size:.95rem; color:var(--ink-dark); display:flex; align-items:center;
+    justify-content:space-between; gap:8px;
+  }
+  section.card h2 .titulo-icone{margin-right:4px;}
+
+  /* cada seção com sua própria cor, pra diferenciar rotina de extra rapidinho */
+  section.card.card-padrao{border-top-color:var(--teal); background:#f2fbfa;}
+  section.card.card-padrao h2{color:var(--teal-dark);}
+  section.card.card-extra{border-top-color:var(--roxo); background:#f8f5fc;}
+  section.card.card-extra h2{color:var(--roxo-escuro);}
+
+  label{font-size:.82rem; color:var(--muted); font-weight:bold; display:block; margin-bottom:4px;}
+
+  .atividade-row{
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+    padding:11px 0; border-bottom:1px solid var(--line);
+  }
+  .atividade-row:last-child{border-bottom:none;}
+  .atividade-nome{flex:1 1 100%; font-weight:bold; font-size:.9rem; color:var(--ink-dark); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .atividade-tempo{
+    font-size:.66rem; font-weight:bold; color:var(--teal-dark); background:var(--teal-light);
+    border-radius:8px; padding:2px 7px; white-space:nowrap;
+  }
+  .atividade-tag-essencial{
+    font-size:.66rem; font-weight:bold; color:#9a3b12; background:#fbe3d0;
+    border-radius:8px; padding:2px 7px; white-space:nowrap;
+  }
+  .atividade-row.essencial{border-left:4px solid #d9642c; padding-left:8px; margin-left:-4px;}
+  .crit-chip.ativa-essencial{background:#fbe3d0; border-color:#d9642c; color:#9a3b12;}
+
+  .concluir-toggle{
+    display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;
+    padding:6px 10px; border-radius:9px; border:1px solid #d7dee2; background:#fbfcfd;
+    font-size:.8rem; font-weight:bold; color:var(--muted); margin-left:auto;
+  }
+  .concluir-toggle input{width:18px; height:18px; accent-color:var(--teal); cursor:pointer; margin:0;}
+  .concluir-toggle.marcada{border-color:var(--verde); background:var(--teal-light); color:var(--verde);}
+  .atividade-campo{display:flex; flex-direction:column; gap:2px;}
+  .atividade-campo span{font-size:.66rem; color:#9aa7ad; text-transform:uppercase; letter-spacing:.3px;}
+  input[type=time], input[type=text]{
+    padding:8px 9px; border-radius:8px; border:1px solid #d7dee2; font-size:.88rem; font-family:inherit; color:var(--ink-dark);
+  }
+  input[type=time]:focus, input[type=text]:focus{outline:2px solid var(--teal-light); border-color:var(--teal);}
+  .atividade-row .remover-btn{
+    background:none; border:1px solid var(--vermelho); color:var(--vermelho); border-radius:14px;
+    padding:6px 10px; font-size:.75rem; font-weight:bold; cursor:pointer; margin-left:auto; align-self:flex-end;
+  }
+  .extra-desc{flex:1 1 100%; width:100%;}
+
+  .add-btn{
+    background:var(--teal); color:#fff; border:none; border-radius:16px; padding:6px 12px;
+    font-size:.75rem; font-weight:bold; cursor:pointer;
+  }
+
+  .empty{color:#9aa7ad; font-size:.85rem; padding:10px 0; text-align:center;}
+
+  .status-badge{
+    display:inline-flex; align-items:center; gap:3px; font-size:.66rem; font-weight:bold; border-radius:8px;
+    padding:2px 8px; white-space:nowrap;
+  }
+  .status-pendente{background:#eef1f3; color:var(--muted);}
+  .status-ok{background:#e4f5ea; color:var(--verde);}
+  .status-bad{background:#faeaea; color:var(--vermelho);}
+
+  .progress-summary{margin-bottom:10px;}
+  .progress-bar{
+    display:flex; width:100%; height:8px; border-radius:6px; overflow:hidden;
+    background:var(--line); margin-bottom:6px;
+  }
+  .progress-bar .seg-ok{background:var(--verde);}
+  .progress-bar .seg-bad{background:var(--vermelho);}
+  .progress-text{font-size:.75rem; color:var(--muted);}
+
+  .bulk-btn{
+    width:100%; margin-top:10px; padding:10px; border-radius:9px; border:1px solid var(--vermelho);
+    background:none; color:var(--vermelho); font-size:.8rem; font-weight:bold; cursor:pointer;
+  }
+  .pull-btn{
+    width:100%; margin-bottom:10px; padding:10px; border-radius:9px; border:1px solid var(--teal);
+    background:none; color:var(--teal-dark); font-size:.8rem; font-weight:bold; cursor:pointer;
+  }
+
+  .excluir-btn{
+    background:none; border:none; color:#b7c1c6; font-size:.9rem; cursor:pointer;
+    margin-left:auto; padding:2px 6px;
+  }
+  .excluir-opcoes{display:flex; gap:6px; margin-left:auto; align-items:center;}
+  .excluir-opcoes button{border-radius:10px; padding:5px 9px; font-size:.7rem; font-weight:bold; cursor:pointer;}
+  .excluir-hoje-btn{background:none; border:1px solid var(--teal); color:var(--teal-dark);}
+  .excluir-sempre-btn{background:none; border:1px solid var(--vermelho); color:var(--vermelho);}
+  .excluir-cancel-btn{background:none; border:1px solid #ccc; color:#777;}
+  .senha-input{width:90px; padding:6px 8px; border-radius:8px; border:1px solid #d7dee2; font-size:.75rem; font-family:inherit;}
+
+  .obs-nota{flex:1 1 100%; font-size:.75rem; color:#7a8992; font-style:italic; margin-top:2px; background:var(--teal-light); border-radius:8px; padding:6px 9px;}
+
+  .extra-meta{flex:1 1 100%; font-size:.72rem; color:var(--muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .atraso-badge{font-weight:bold; border-radius:8px; padding:2px 8px;}
+  .atraso-baixo{background:#eef1f3; color:var(--muted);}
+  .atraso-medio{background:#fdf1de; color:var(--amarelo);}
+  .atraso-alto{background:#faeaea; color:var(--vermelho);}
+  .atraso-critico{background:var(--vermelho); color:#fff;}
+
+  .criticidade-row{flex:1 1 100%; display:flex; gap:6px; margin-top:2px;}
+  .crit-chip{
+    border-radius:10px; padding:4px 10px; font-size:.68rem; font-weight:bold; cursor:pointer;
+    border:1px solid #d7dee2; background:#fbfcfd; color:var(--muted);
+  }
+  .crit-chip.ativa-baixa{background:#e7edf7; border-color:#5b7fb9; color:#3a5a8c;}
+  .crit-chip.ativa-media{background:#fdf1de; border-color:var(--amarelo); color:#8a5c10;}
+  .crit-chip.ativa-alta{background:#faeaea; border-color:var(--vermelho); color:var(--vermelho);}
+
+  .atividade-row.crit-alta{border-left:4px solid var(--vermelho); padding-left:8px; margin-left:-4px;}
+  .atividade-row.crit-media{border-left:4px solid var(--amarelo); padding-left:8px; margin-left:-4px;}
+  .atividade-row.crit-baixa{border-left:4px solid #5b7fb9; padding-left:8px; margin-left:-4px;}
+
+  .obs-overlay{
+    position:fixed; inset:0; background:rgba(20,35,40,0.5); display:flex; align-items:center;
+    justify-content:center; padding:16px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:50;
+  }
+  .obs-overlay.show{opacity:1; pointer-events:auto;}
+  .obs-box{background:#fff; border-radius:14px; padding:18px; width:100%; max-width:360px; box-shadow:var(--shadow);}
+  .obs-box h3{margin:0 0 4px; font-size:1rem; color:var(--ink-dark);}
+  .obs-box .obs-atividade{margin:0 0 10px; font-size:.82rem; color:var(--muted); font-weight:bold;}
+  .obs-box textarea{
+    width:100%; border-radius:9px; border:1px solid #d7dee2; padding:8px; font-family:inherit; font-size:.9rem; resize:vertical;
+  }
+  .obs-box input[type=text], .obs-box input[type=number]{
+    width:100%; margin-top:2px; border-radius:9px;
+  }
+  .obs-box label{margin-bottom:2px;}
+  .obs-crit-row{display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .obs-crit-label{font-size:.75rem; color:var(--muted); font-weight:bold; margin-right:2px;}
+  .obs-botoes{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; margin-top:12px;}
+  .obs-pular-btn{background:none; border:1px solid #ccc; color:#666; border-radius:8px; padding:8px 14px; font-size:.85rem; cursor:pointer;}
+  .obs-criar-extra-btn{background:none; border:1px solid var(--teal); color:var(--teal-dark); border-radius:8px; padding:8px 12px; font-size:.8rem; font-weight:bold; cursor:pointer; margin-right:auto;}
+  .obs-salvar-btn{background:var(--teal); border:none; color:#fff; border-radius:8px; padding:8px 14px; font-size:.85rem; font-weight:bold; cursor:pointer;}
+
+  #toast{
+    position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(20px);
+    background:var(--ink-dark); color:#fff; padding:10px 18px; border-radius:24px;
+    font-size:.9rem; opacity:0; transition:all .25s; pointer-events:none; box-shadow:var(--shadow);
+    white-space:nowrap;
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="header-title">📔 Meu Diário de Bordo</div>
+    <div class="header-badge"><span id="status-dot"></span><span id="status-text">conectando…</span></div>
+  </div>
+  <div class="day-nav">
+    <button type="button" onclick="mudarDia(-1)">‹</button>
+    <div class="day-label" onclick="document.getElementById('data-input').showPicker && document.getElementById('data-input').showPicker()">
+      <span id="dia-texto">—</span>
+      <span class="hoje-tag" id="dia-tag">hoje</span>
+    </div>
+    <button type="button" onclick="mudarDia(1)">›</button>
+  </div>
+  <input type="date" id="data-input" style="position:absolute; opacity:0; width:1px; height:1px;">
+</header>
+
+<details class="settings">
+  <summary>Configuração (URL do Apps Script)</summary>
+  <input type="text" id="script-url-input" placeholder="Cole aqui a URL do Web App do Apps Script (termina em /exec)">
+  <button class="save-url" onclick="salvarUrlSessao()">Usar esta URL nesta sessão</button>
+  <p style="margin:6px 0 0;">Para deixar isso fixo permanentemente, edite a constante <code>SCRIPT_URL</code> no início do arquivo HTML.</p>
+</details>
+
+<main>
+  <div class="resumo-card">
+    <div class="resumo-item">
+      <div class="resumo-ring" id="ring-padrao" style="--pct:0"><span id="pct-padrao">0%</span></div>
+      <span class="resumo-label">Rotina</span>
+    </div>
+    <div class="resumo-item">
+      <div class="resumo-ring" id="ring-extra" style="--pct:0"><span id="pct-extra">0%</span></div>
+      <span class="resumo-label">Extras</span>
+    </div>
+    <div class="resumo-item resumo-item-total">
+      <div class="resumo-ring resumo-ring-total" id="ring-total" style="--pct:0"><span id="pct-total">0%</span></div>
+      <span class="resumo-label">Todas</span>
+    </div>
+  </div>
+
+  <section class="card card-padrao">
+    <h2><span><span class="titulo-icone">🗓️</span>Atividades de Rotina</span> <button type="button" class="add-btn" onclick="adicionarAtividadePadrao()">+ Adicionar</button></h2>
+    <div class="progress-summary" id="padrao-progress"></div>
+    <div id="padrao-list"><div class="empty">Carregando…</div></div>
+    <button type="button" class="bulk-btn" onclick="marcarPendentesComoNaoRealizadas('Padrão')">Não vou fazer o que sobrou hoje</button>
+  </section>
+
+  <section class="card card-extra">
+    <h2><span><span class="titulo-icone">✏️</span>Atividades Extras</span> <button type="button" class="add-btn" onclick="adicionarExtra()">+ Adicionar</button></h2>
+    <div class="progress-summary" id="extra-progress"></div>
+    <button type="button" class="pull-btn" onclick="puxarExtrasDeOntem()">↺ Puxar pendências de ontem</button>
+    <button type="button" class="pull-btn" onclick="abrirHistoricoExtras()">📜 Ver todas as concluídas</button>
+    <div id="extra-list"><div class="empty">Nenhuma atividade extra registrada nesse dia.</div></div>
+    <button type="button" class="bulk-btn" onclick="marcarPendentesComoNaoRealizadas('Extra')">Não vou fazer o que sobrou hoje</button>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<div id="obs-overlay" class="obs-overlay">
+  <div class="obs-box">
+    <h3>Observação</h3>
+    <p class="obs-atividade" id="obs-atividade-nome"></p>
+    <textarea id="obs-textarea" rows="4" placeholder="Alguma observação sobre essa atividade? (opcional)"></textarea>
+    <div class="obs-crit-row" id="obs-crit-row" style="display:none;">
+      <span class="obs-crit-label">Criticidade da extra:</span>
+      <button type="button" class="crit-chip" data-nivel="Baixa">Baixa</button>
+      <button type="button" class="crit-chip" data-nivel="Média">Média</button>
+      <button type="button" class="crit-chip" data-nivel="Alta">Alta</button>
+    </div>
+    <div class="obs-botoes">
+      <button type="button" id="obs-criar-extra-btn" class="obs-criar-extra-btn" style="display:none;">+ Criar como extra</button>
+      <button type="button" id="obs-pular-btn" class="obs-pular-btn">Pular</button>
+      <button type="button" id="obs-salvar-btn" class="obs-salvar-btn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="nova-padrao-overlay" class="obs-overlay">
+  <div class="obs-box">
+    <h3>Nova atividade de rotina</h3>
+    <label style="margin-top:6px;">Nome da atividade</label>
+    <input type="text" id="nova-padrao-nome" placeholder="Ex: Conferir extintores">
+    <label style="margin-top:10px;">Tempo fixo (minutos)</label>
+    <input type="number" id="nova-padrao-tempo" min="1" placeholder="Ex: 10">
+    <div class="obs-crit-row" style="margin-top:10px;">
+      <span class="obs-crit-label">Essencial (não pode faltar)?</span>
+      <button type="button" class="crit-chip" id="nova-padrao-essencial-sim">Sim</button>
+      <button type="button" class="crit-chip" id="nova-padrao-essencial-nao">Não</button>
+    </div>
+    <div class="obs-botoes">
+      <button type="button" id="nova-padrao-cancelar-btn" class="obs-pular-btn">Cancelar</button>
+      <button type="button" id="nova-padrao-salvar-btn" class="obs-salvar-btn">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<div id="historico-overlay" class="obs-overlay">
+  <div class="obs-box" style="max-width:440px; max-height:82vh; overflow-y:auto;">
+    <h3>Extras já concluídas</h3>
+    <p class="obs-atividade">Todo o histórico, independente da data ou do prazo.</p>
+    <div id="historico-list"><div class="empty">Carregando…</div></div>
+    <div class="obs-botoes">
+      <button type="button" id="historico-fechar-btn" class="obs-salvar-btn">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURAÇÃO — cole aqui a URL do seu Apps Script (termina em /exec)
+// ============================================================
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz41rkzFFEvr2bWmMV5KjQmn2uOh62HOHO0GlOkQQEsp4RW-J3jFlyzWKxz_DhQoOk/exec";
+// ============================================================
+
+let scriptUrlSessao = "";
+function getScriptUrl(){
+  if (scriptUrlSessao) return scriptUrlSessao;
+  if (SCRIPT_URL && SCRIPT_URL.indexOf("COLOQUE_AQUI") === -1) return SCRIPT_URL;
+  return "";
+}
+function salvarUrlSessao(){
+  const v = document.getElementById('script-url-input').value.trim();
+  if (v) { scriptUrlSessao = v; toast("URL definida para esta sessão"); carregarAtividadesPadrao(); }
+}
+
+// ============================================================
+// JSONP — evita bloqueio de CORS ao chamar o Apps Script a partir de outro site
+// ============================================================
+let jsonpCounter = 0;
+function jsonpRequest(url, params){
+  return new Promise((resolve, reject) => {
+    const cbName = 'jsonp_cb_' + (jsonpCounter++) + '_' + Math.floor(Math.random()*1e9);
+    const script = document.createElement('script');
+    let finished = false;
+    function cleanup(){
+      delete window[cbName];
+      script.remove();
+      clearTimeout(timer);
+    }
+    window[cbName] = function(data){
+      finished = true;
+      cleanup();
+      resolve(data);
+    };
+    const timer = setTimeout(() => {
+      if (!finished){ cleanup(); reject(new Error('tempo esgotado ao contatar a planilha')); }
+    }, 15000);
+    script.onerror = () => { if(!finished){ cleanup(); reject(new Error('não foi possível contatar o Apps Script')); } };
+    const qs = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+    script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + qs + '&callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+
+function setStatus(ok, msg){
+  const dot = document.getElementById('status-dot');
+  dot.className = ok ? 'ok' : 'err';
+  document.getElementById('status-text').textContent = msg;
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// Serializa saves por "chave" pra evitar que dois campos editados em sequência
+// rápida disparem chamadas simultâneas e acabem criando duas linhas na planilha.
+const saveQueues = {};
+function enqueueSave(key, fn){
+  const prev = saveQueues[key] || Promise.resolve();
+  const next = prev.then(fn);
+  saveQueues[key] = next;
+  return next;
+}
+
+function hojeLocal(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dia = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dia}`;
+}
+
+const DIAS_SEMANA = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function formatarRotuloDia(dataStr){
+  const [y,m,d] = dataStr.split('-').map(Number);
+  const dt = new Date(y, m-1, d, 12);
+  return `${DIAS_SEMANA[dt.getDay()]}, ${d} de ${MESES[m-1]}`;
+}
+function atualizarRotuloDia(){
+  document.getElementById('dia-texto').textContent = formatarRotuloDia(dataAtual);
+  document.getElementById('dia-tag').style.display = (dataAtual === hojeLocal()) ? '' : 'none';
+  document.getElementById('dia-tag').textContent = dataAtual === hojeLocal() ? 'hoje' : (dataAtual < hojeLocal() ? 'passado' : 'futuro');
+}
+function mudarDia(delta){
+  const d = new Date(dataAtual + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), dia = String(d.getDate()).padStart(2,'0');
+  dataAtual = `${y}-${m}-${dia}`;
+  document.getElementById('data-input').value = dataAtual;
+  atualizarRotuloDia();
+  carregarDiario();
+}
+document.getElementById('data-input').addEventListener('change', (e) => {
+  dataAtual = e.target.value || hojeLocal();
+  atualizarRotuloDia();
+  carregarDiario();
+});
+
+let ATIVIDADES_PADRAO = [];        // nomes, ordenados (essenciais primeiro)
+let ATIVIDADES_PADRAO_INFO = {};   // nome -> {tempo, essencial}
+let dataAtual = hojeLocal();
+let entradasDoDia = [];
+let extrasLocais = [];
+
+document.getElementById('data-input').value = dataAtual;
+
+function tempoDaAtividade(nome){
+  const a = ATIVIDADES_PADRAO_INFO[nome];
+  return a && a.tempo != null ? a.tempo : null;
+}
+function ehEssencial(nome){
+  const a = ATIVIDADES_PADRAO_INFO[nome];
+  return a ? !!a.essencial : false;
+}
+
+async function carregarAtividadesPadrao(){
+  const url = getScriptUrl();
+  if (!url){ setStatus(false, "configure a URL do Apps Script acima ↑"); return; }
+  setStatus(false, "conectando à planilha…");
+  try{
+    const data = await jsonpRequest(url, {action:'atividadesPadrao'});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    ATIVIDADES_PADRAO_INFO = {};
+    (data.atividades || []).forEach(a => { ATIVIDADES_PADRAO_INFO[a.nome] = {tempo: a.tempo, essencial: !!a.essencial}; });
+    // essenciais aparecem primeiro na lista
+    ATIVIDADES_PADRAO = (data.atividades || [])
+      .slice()
+      .sort((a, b) => (b.essencial ? 1 : 0) - (a.essencial ? 1 : 0))
+      .map(a => a.nome);
+    setStatus(true, "conectado — dados ao vivo da planilha");
+    atualizarRotuloDia();
+    await carregarDiario();
+  }catch(err){
+    setStatus(false, "falha ao conectar: " + err.message);
+  }
+}
+
+// Pendente/Não realizada primeiro (concluída vai pro final), depois mais
+// crítica primeiro, e entre as de mesma criticidade, a mais atrasada primeiro.
+const RANK_CRITICIDADE = {Alta:3, Média:2, Baixa:1};
+function ordenarExtras(lista){
+  return lista.slice().sort((a, b) => {
+    const aPendente = a.status !== 'Concluída' ? 0 : 1;
+    const bPendente = b.status !== 'Concluída' ? 0 : 1;
+    if (aPendente !== bPendente) return aPendente - bPendente;
+    const diffCrit = (RANK_CRITICIDADE[b.criticidade] || 0) - (RANK_CRITICIDADE[a.criticidade] || 0);
+    if (diffCrit !== 0) return diffCrit;
+    const atrasoA = Math.max(diasEntre(a.dataCriacao || dataAtual, dataAtual), 0);
+    const atrasoB = Math.max(diasEntre(b.dataCriacao || dataAtual, dataAtual), 0);
+    return atrasoB - atrasoA;
+  });
+}
+
+async function carregarDiario(){
+  const url = getScriptUrl();
+  if (!url) return;
+  try{
+    const data = await jsonpRequest(url, {action:'diario', data: dataAtual});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    entradasDoDia = data.entradas;
+    extrasLocais = ordenarExtras(entradasDoDia
+      .filter(e => e.tipo === 'Extra')
+      .map(e => ({id: e.id, _key: 'id-'+e.id, atividade: e.atividade, horaInicio: e.horaInicio, horaTermino: e.horaTermino, status: e.status, observacao: e.observacao || '', dataCriacao: e.dataCriacao || dataAtual, criticidade: e.criticidade || null})));
+    renderPadrao();
+    renderExtras();
+    renderResumo();
+  }catch(err){
+    toast("Erro ao carregar o dia: " + err.message);
+  }
+}
+
+function buscarEntradaPadrao(nome){
+  return entradasDoDia.find(e => e.tipo === 'Padrão' && e.atividade === nome);
+}
+
+function classeStatus(status){
+  return status === 'Concluída' ? 'status-ok' : status === 'Não realizada' ? 'status-bad' : 'status-pendente';
+}
+function textoStatus(status){
+  return status === 'Concluída' ? '✓ Concluída' : status === 'Não realizada' ? '✕ Não realizada' : '○ Pendente';
+}
+function atualizarBadgeEl(span, status){
+  span.className = 'status-badge ' + classeStatus(status);
+  span.textContent = textoStatus(status);
+}
+function statusBadgeEl(status){
+  const span = document.createElement('span');
+  atualizarBadgeEl(span, status);
+  return span;
+}
+
+// ============================================================
+// Modal de Observação — abre assim que você marca uma atividade padrão como
+// concluída, ou preenche a Hora Término de uma extra.
+// Resolve sempre com {observacao, criarExtra, criticidade}. "criarExtra" só é
+// possível quando a atividade padrão é concluída (permitirCriarExtra=true) —
+// vira um jeito rápido de transformar uma observação em atividade extra.
+// ============================================================
+function abrirModalObservacao(valorAtual, nomeAtividade, permitirCriarExtra){
+  return new Promise(resolve => {
+    const overlay = document.getElementById('obs-overlay');
+    const textarea = document.getElementById('obs-textarea');
+    const tituloEl = document.getElementById('obs-atividade-nome');
+    const criarExtraBtn = document.getElementById('obs-criar-extra-btn');
+    const critRow = document.getElementById('obs-crit-row');
+    const critChips = critRow.querySelectorAll('.crit-chip');
+    textarea.value = valorAtual || '';
+    tituloEl.textContent = nomeAtividade || '';
+    criarExtraBtn.style.display = permitirCriarExtra ? '' : 'none';
+    critRow.style.display = permitirCriarExtra ? '' : 'none';
+
+    // deixa "Média" pré-selecionada, mas dá pra escolher a criticidade da
+    // extra ali mesmo, antes de criá-la — sem precisar lembrar de ajustar depois.
+    let criticidadeEscolhida = 'Média';
+    function marcarChipAtivo(){
+      critChips.forEach(chip => {
+        chip.classList.remove('ativa-baixa','ativa-media','ativa-alta');
+        if (chip.dataset.nivel === criticidadeEscolhida){
+          chip.classList.add('ativa-' + (criticidadeEscolhida === 'Média' ? 'media' : criticidadeEscolhida.toLowerCase()));
+        }
+      });
+    }
+    marcarChipAtivo();
+    critChips.forEach(chip => {
+      chip.onclick = () => { criticidadeEscolhida = chip.dataset.nivel; marcarChipAtivo(); };
+    });
+
+    overlay.classList.add('show');
+    const salvarBtn = document.getElementById('obs-salvar-btn');
+    const pularBtn = document.getElementById('obs-pular-btn');
+    function fechar(resultado){
+      overlay.classList.remove('show');
+      salvarBtn.onclick = null;
+      pularBtn.onclick = null;
+      criarExtraBtn.onclick = null;
+      critChips.forEach(chip => { chip.onclick = null; });
+      resolve(resultado);
+    }
+    salvarBtn.onclick = () => fechar({observacao: textarea.value, criarExtra: false});
+    pularBtn.onclick = () => fechar({observacao: undefined, criarExtra: false});
+    criarExtraBtn.onclick = () => fechar({observacao: textarea.value, criarExtra: true, criticidade: criticidadeEscolhida});
+    setTimeout(() => textarea.focus(), 50);
+  });
+}
+
+async function criarExtraApartirDeObservacao(texto, criticidade){
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+  const payload = {id:null, data:dataAtual, tipo:'Extra', atividade:texto, horaInicio:'', horaTermino:'', observacao:'', criticidade: criticidade || 'Média', dataCriacao: dataAtual};
+  try{
+    const data = await jsonpRequest(url, {action:'salvarAtividade', payload: JSON.stringify(payload)});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    await carregarDiario();
+    toast('Criada como atividade extra ✔');
+  }catch(err){
+    toast("Erro ao criar extra: " + err.message);
+  }
+}
+
+// ============================================================
+// Nova atividade de rotina — grava uma linha nova na aba "Atividades Padrão"
+// da planilha, com tempo fixo e se é essencial.
+// ============================================================
+function abrirModalNovaPadrao(){
+  return new Promise(resolve => {
+    const overlay = document.getElementById('nova-padrao-overlay');
+    const nomeInput = document.getElementById('nova-padrao-nome');
+    const tempoInput = document.getElementById('nova-padrao-tempo');
+    const simBtn = document.getElementById('nova-padrao-essencial-sim');
+    const naoBtn = document.getElementById('nova-padrao-essencial-nao');
+    nomeInput.value = '';
+    tempoInput.value = '';
+    let essencialEscolhido = false;
+    function marcar(){
+      simBtn.classList.toggle('ativa-essencial', essencialEscolhido);
+      naoBtn.classList.toggle('ativa-baixa', !essencialEscolhido);
+    }
+    marcar();
+    simBtn.onclick = () => { essencialEscolhido = true; marcar(); };
+    naoBtn.onclick = () => { essencialEscolhido = false; marcar(); };
+
+    overlay.classList.add('show');
+    const salvarBtn = document.getElementById('nova-padrao-salvar-btn');
+    const cancelarBtn = document.getElementById('nova-padrao-cancelar-btn');
+    function fechar(resultado){
+      overlay.classList.remove('show');
+      salvarBtn.onclick = null;
+      cancelarBtn.onclick = null;
+      simBtn.onclick = null;
+      naoBtn.onclick = null;
+      resolve(resultado);
+    }
+    salvarBtn.onclick = () => {
+      const nome = nomeInput.value.trim();
+      const tempo = parseInt(tempoInput.value, 10);
+      if (!nome){ toast('Digite o nome da atividade'); return; }
+      if (!tempo || tempo <= 0){ toast('Informe o tempo fixo em minutos'); return; }
+      fechar({nome, tempo, essencial: essencialEscolhido});
+    };
+    cancelarBtn.onclick = () => fechar(null);
+    setTimeout(() => nomeInput.focus(), 50);
+  });
+}
+
+async function adicionarAtividadePadrao(){
+  const resultado = await abrirModalNovaPadrao();
+  if (!resultado) return;
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+  try{
+    const data = await jsonpRequest(url, {action:'adicionarAtividadePadrao', payload: JSON.stringify(resultado)});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    await carregarAtividadesPadrao();
+    toast('Atividade de rotina adicionada ✔');
+  }catch(err){
+    toast("Erro ao adicionar: " + err.message);
+  }
+}
+
+function aplicarAnel(ringId, pctId, concluidas, total){
+  const pct = total ? Math.round(concluidas/total*100) : 0;
+  document.getElementById(ringId).style.setProperty('--pct', pct);
+  document.getElementById(pctId).textContent = total ? pct + '%' : '—';
+}
+
+function renderResumo(){
+  const totalPadrao = ATIVIDADES_PADRAO.length;
+  const totalExtra = extrasLocais.length;
+
+  let concluidasPadrao = 0;
+  ATIVIDADES_PADRAO.forEach(nome => {
+    const e = buscarEntradaPadrao(nome);
+    if (e && e.status === 'Concluída') concluidasPadrao++;
+  });
+
+  let concluidasExtra = 0;
+  extrasLocais.forEach(e => { if (e.status === 'Concluída') concluidasExtra++; });
+
+  aplicarAnel('ring-padrao', 'pct-padrao', concluidasPadrao, totalPadrao);
+  aplicarAnel('ring-extra', 'pct-extra', concluidasExtra, totalExtra);
+  aplicarAnel('ring-total', 'pct-total', concluidasPadrao + concluidasExtra, totalPadrao + totalExtra);
+}
+
+function renderProgress(elId, total, concluidas, naoRealizadas, vazioMsg){
+  const el = document.getElementById(elId);
+  if (total === 0){
+    el.innerHTML = `<div class="empty">${vazioMsg}</div>`;
+    return;
+  }
+  const pendentes = Math.max(total - concluidas - naoRealizadas, 0);
+  const pctConcluida = Math.round(concluidas/total*100);
+  const pctNaoRealizada = Math.round(naoRealizadas/total*100);
+  el.innerHTML = '';
+  const bar = document.createElement('div');
+  bar.className = 'progress-bar';
+  const segOk = document.createElement('div');
+  segOk.className = 'seg-ok';
+  segOk.style.width = (concluidas/total*100) + '%';
+  const segBad = document.createElement('div');
+  segBad.className = 'seg-bad';
+  segBad.style.width = (naoRealizadas/total*100) + '%';
+  bar.appendChild(segOk);
+  bar.appendChild(segBad);
+  const text = document.createElement('div');
+  text.className = 'progress-text';
+  text.textContent = `${concluidas}/${total} concluídas (${pctConcluida}%) · ${naoRealizadas} não realizadas (${pctNaoRealizada}%) · ${pendentes} pendentes`;
+  el.appendChild(bar);
+  el.appendChild(text);
+}
+
+function renderPadraoProgress(){
+  const total = ATIVIDADES_PADRAO.length;
+  let concluidas = 0, naoRealizadas = 0;
+  ATIVIDADES_PADRAO.forEach(nome => {
+    const e = buscarEntradaPadrao(nome);
+    if (e && e.status === 'Concluída') concluidas++;
+    else if (e && e.status === 'Não realizada') naoRealizadas++;
+  });
+  renderProgress('padrao-progress', total, concluidas, naoRealizadas, 'Nenhuma atividade de rotina cadastrada na planilha ainda.');
+}
+
+function renderExtraProgress(){
+  const total = extrasLocais.length;
+  let concluidas = 0, naoRealizadas = 0;
+  extrasLocais.forEach(e => {
+    if (e.status === 'Concluída') concluidas++;
+    else if (e.status === 'Não realizada') naoRealizadas++;
+  });
+  renderProgress('extra-progress', total, concluidas, naoRealizadas, 'Nenhuma atividade extra ainda hoje.');
+}
+
+function renderPadrao(){
+  const wrap = document.getElementById('padrao-list');
+  wrap.innerHTML = '';
+  renderPadraoProgress();
+  if (ATIVIDADES_PADRAO.length === 0){
+    wrap.innerHTML = '<div class="empty">Nenhuma atividade de rotina cadastrada na planilha ainda.</div>';
+    return;
+  }
+  ATIVIDADES_PADRAO.forEach(nome => {
+    const existente = buscarEntradaPadrao(nome);
+    const status = existente ? existente.status : 'Pendente';
+    const row = document.createElement('div');
+    row.className = 'atividade-row' + (ehEssencial(nome) ? ' essencial' : '');
+
+    const nomeEl = document.createElement('div');
+    nomeEl.className = 'atividade-nome';
+    nomeEl.appendChild(document.createTextNode(nome));
+    const tempo = tempoDaAtividade(nome);
+    if (tempo !== null){
+      const tempoEl = document.createElement('span');
+      tempoEl.className = 'atividade-tempo';
+      tempoEl.textContent = '⏱ ' + tempo + 'min';
+      nomeEl.appendChild(tempoEl);
+    }
+    if (ehEssencial(nome)){
+      const tagEl = document.createElement('span');
+      tagEl.className = 'atividade-tag-essencial';
+      tagEl.textContent = '⚠️ Essencial';
+      nomeEl.appendChild(tagEl);
+    }
+    if (status === 'Não realizada'){
+      nomeEl.appendChild(statusBadgeEl(status));
+    }
+    row.appendChild(nomeEl);
+
+    // o próprio toggle já mostra o estado (marcado/verde = concluída, vazio = pendente)
+    const toggleLabel = document.createElement('label');
+    toggleLabel.className = 'concluir-toggle' + (status === 'Concluída' ? ' marcada' : '');
+    const toggleInput = document.createElement('input');
+    toggleInput.type = 'checkbox';
+    toggleInput.checked = status === 'Concluída';
+    const toggleTexto = document.createElement('span');
+    toggleTexto.textContent = status === 'Concluída' ? 'Concluída' : 'Pendente';
+    toggleLabel.appendChild(toggleInput);
+    toggleLabel.appendChild(toggleTexto);
+    row.appendChild(toggleLabel);
+
+    const excluirBtn = document.createElement('button');
+    excluirBtn.type = 'button';
+    excluirBtn.className = 'excluir-btn';
+    excluirBtn.textContent = '🗑️';
+    excluirBtn.addEventListener('click', () => iniciarExclusaoPadrao(excluirBtn, nome));
+    row.appendChild(excluirBtn);
+
+    if (existente && existente.observacao){
+      const notaEl = document.createElement('div');
+      notaEl.className = 'obs-nota';
+      notaEl.textContent = '📝 ' + existente.observacao;
+      row.appendChild(notaEl);
+    }
+
+    toggleInput.addEventListener('change', async () => {
+      const marcando = toggleInput.checked;
+      toggleLabel.classList.toggle('marcada', marcando);
+      toggleTexto.textContent = marcando ? 'Concluída' : 'Pendente';
+      let resultado = {observacao: undefined, criarExtra: false};
+      if (marcando){
+        const atual = buscarEntradaPadrao(nome);
+        resultado = await abrirModalObservacao(atual ? atual.observacao : '', nome, true);
+      }
+      await enqueueSave('padrao:'+nome, () => salvarPadrao(nome, marcando, resultado.observacao));
+      if (resultado.criarExtra && resultado.observacao && resultado.observacao.trim()){
+        await criarExtraApartirDeObservacao(resultado.observacao.trim(), resultado.criticidade);
+      }
+    });
+
+    wrap.appendChild(row);
+  });
+}
+
+async function salvarPadrao(nome, concluida, observacao){
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+  const existente = buscarEntradaPadrao(nome);
+  const payload = {
+    id: existente ? existente.id : null,
+    data: dataAtual,
+    tipo: 'Padrão',
+    atividade: nome,
+    concluida
+  };
+  if (observacao !== undefined) payload.observacao = observacao;
+  try{
+    const data = await jsonpRequest(url, {action:'salvarAtividade', payload: JSON.stringify(payload)});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    if (existente){
+      existente.status = data.status;
+      existente.observacao = data.observacao || '';
+    } else {
+      entradasDoDia.push({id:data.id, data:dataAtual, tipo:'Padrão', atividade:nome, status:data.status, observacao: data.observacao || ''});
+    }
+    renderPadraoProgress();
+    renderResumo();
+    toast("Salvo ✔");
+  }catch(err){
+    toast("Erro ao salvar: " + err.message);
+  }
+}
+
+function iniciarExclusaoPadrao(btnEl, nome){
+  const row = document.createElement('div');
+  row.className = 'excluir-opcoes';
+  row.innerHTML = `
+    <button type="button" class="excluir-hoje-btn">Só hoje</button>
+    <button type="button" class="excluir-sempre-btn">Para sempre</button>
+    <button type="button" class="excluir-cancel-btn">✕</button>
+  `;
+  btnEl.replaceWith(row);
+  row.querySelector('.excluir-cancel-btn').onclick = () => row.replaceWith(btnEl);
+  row.querySelector('.excluir-hoje-btn').onclick = () => excluirPadraoHoje(nome);
+  row.querySelector('.excluir-sempre-btn').onclick = () => pedirSenhaParaSempre(row, btnEl, nome);
+}
+
+const SENHA_EXCLUIR_PARA_SEMPRE = 'banana';
+
+function pedirSenhaParaSempre(row, btnElOriginal, nome){
+  row.innerHTML = `
+    <input type="password" class="senha-input" placeholder="Senha">
+    <button type="button" class="excluir-sempre-btn">Confirmar</button>
+    <button type="button" class="excluir-cancel-btn">✕</button>
+  `;
+  const senhaInput = row.querySelector('.senha-input');
+  senhaInput.focus();
+  const confirmar = () => {
+    if (senhaInput.value !== SENHA_EXCLUIR_PARA_SEMPRE){
+      toast('Senha incorreta');
+      senhaInput.value = '';
+      senhaInput.focus();
+      return;
+    }
+    excluirPadraoParaSempre(nome);
+  };
+  row.querySelector('.excluir-cancel-btn').onclick = () => row.replaceWith(btnElOriginal);
+  row.querySelector('.excluir-sempre-btn').onclick = confirmar;
+  senhaInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') confirmar(); });
+}
+
+async function excluirPadraoHoje(nome){
+  const existente = buscarEntradaPadrao(nome);
+  if (existente && existente.id){
+    const url = getScriptUrl();
+    if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+    try{
+      const data = await jsonpRequest(url, {action:'excluirAtividade', id: existente.id});
+      if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    }catch(err){
+      toast("Erro ao excluir: " + err.message);
+      return;
+    }
+  }
+  await carregarDiario();
+  toast("Removido de hoje");
+}
+
+async function excluirPadraoParaSempre(nome){
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+  try{
+    const data = await jsonpRequest(url, {action:'excluirAtividadePadraoCatalogo', atividade: nome});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    await carregarAtividadesPadrao();
+    toast("Removida do catálogo para sempre");
+  }catch(err){
+    toast("Erro ao excluir: " + err.message);
+  }
+}
+
+function diasEntre(dataInicioStr, dataFimStr){
+  const a = new Date(dataInicioStr + 'T12:00:00');
+  const b = new Date(dataFimStr + 'T12:00:00');
+  return Math.round((b - a) / (1000*60*60*24));
+}
+function formatarDataCurta(dataStr){
+  const [y,m,d] = dataStr.split('-');
+  return `${d}/${m}`;
+}
+function formatarDataCompleta(dataStr){
+  const [y,m,d] = dataStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ============================================================
+// Histórico — todas as extras já concluídas, de qualquer dia, independente
+// do prazo. Traz tudo: horário, criticidade, quanto tempo ficou pendente até
+// ser concluída, e a observação.
+// ============================================================
+async function abrirHistoricoExtras(){
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+  const overlay = document.getElementById('historico-overlay');
+  const listEl = document.getElementById('historico-list');
+  listEl.innerHTML = '<div class="empty">Carregando…</div>';
+  overlay.classList.add('show');
+  document.getElementById('historico-fechar-btn').onclick = () => overlay.classList.remove('show');
+  try{
+    const data = await jsonpRequest(url, {action:'extrasConcluidas'});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    renderHistoricoExtras(data.entradas || []);
+  }catch(err){
+    listEl.innerHTML = `<div class="empty">Erro ao carregar: ${err.message}</div>`;
+  }
+}
+
+function renderHistoricoExtras(lista){
+  const listEl = document.getElementById('historico-list');
+  listEl.innerHTML = '';
+  if (lista.length === 0){
+    listEl.innerHTML = '<div class="empty">Nenhuma atividade extra concluída ainda.</div>';
+    return;
+  }
+  lista.forEach(e => {
+    const item = document.createElement('div');
+    item.style.cssText = 'padding:10px 0; border-bottom:1px solid var(--line); text-align:left;';
+
+    const nomeEl = document.createElement('div');
+    nomeEl.style.cssText = 'font-weight:bold; font-size:.88rem; color:var(--ink-dark); margin-bottom:4px;';
+    nomeEl.textContent = e.atividade;
+    item.appendChild(nomeEl);
+
+    const metaEl = document.createElement('div');
+    metaEl.style.cssText = 'font-size:.75rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:6px; align-items:center;';
+    const concluidaEl = document.createElement('span');
+    concluidaEl.style.color = 'var(--verde)';
+    concluidaEl.style.fontWeight = 'bold';
+    concluidaEl.textContent = '✓ Concluída em ' + formatarDataCompleta(e.data);
+    metaEl.appendChild(concluidaEl);
+    if (e.horaInicio && e.horaTermino){
+      const horaEl = document.createElement('span');
+      horaEl.textContent = `🕐 ${e.horaInicio}–${e.horaTermino}`;
+      metaEl.appendChild(horaEl);
+    }
+    if (e.criticidade){
+      const critEl = document.createElement('span');
+      const critClasse = e.criticidade === 'Alta' ? 'ativa-alta' : e.criticidade === 'Baixa' ? 'ativa-baixa' : 'ativa-media';
+      critEl.className = 'crit-chip ' + critClasse;
+      critEl.style.cursor = 'default';
+      critEl.textContent = e.criticidade;
+      metaEl.appendChild(critEl);
+    }
+    item.appendChild(metaEl);
+
+    if (e.dataCriacao && e.dataCriacao !== e.data){
+      const diasParaConcluir = Math.max(diasEntre(e.dataCriacao, e.data), 0);
+      const criadaEl = document.createElement('div');
+      criadaEl.style.cssText = 'font-size:.72rem; color:var(--muted); margin-top:3px;';
+      criadaEl.textContent = `📅 Postada em ${formatarDataCurta(e.dataCriacao)} · levou ${diasParaConcluir} dia(s) até ser concluída`;
+      item.appendChild(criadaEl);
+    }
+
+    if (e.observacao){
+      const obsEl = document.createElement('div');
+      obsEl.className = 'obs-nota';
+      obsEl.style.marginTop = '6px';
+      obsEl.textContent = '📝 ' + e.observacao;
+      item.appendChild(obsEl);
+    }
+
+    listEl.appendChild(item);
+  });
+}
+
+let extraKeyCounter = 0;
+function adicionarExtra(){
+  // criticidade começa em branco de propósito — os chips ficam sem nenhum
+  // marcado até você escolher, em vez de assumir "Média" escondido.
+  extrasLocais.push({id:null, _key:'novo-'+(extraKeyCounter++), atividade:'', horaInicio:'', horaTermino:'', status:'Pendente', observacao:'', dataCriacao:dataAtual, criticidade:null});
+  renderExtras();
+}
+
+function renderExtras(){
+  const wrap = document.getElementById('extra-list');
+  wrap.innerHTML = '';
+  renderExtraProgress();
+  if (extrasLocais.length === 0){
+    wrap.innerHTML = '<div class="empty">Nenhuma atividade extra registrada nesse dia.</div>';
+    return;
+  }
+  extrasLocais.forEach(extra => {
+    const row = document.createElement('div');
+    const critClasse = extra.criticidade === 'Alta' ? 'crit-alta' : extra.criticidade === 'Baixa' ? 'crit-baixa' : 'crit-media';
+    row.className = 'atividade-row ' + critClasse;
+
+    const descRow = document.createElement('div');
+    descRow.style.cssText = 'flex:1 1 100%; display:flex; align-items:center; gap:6px;';
+    const descInput = document.createElement('input');
+    descInput.type = 'text';
+    descInput.className = 'extra-desc';
+    descInput.placeholder = 'O que foi essa atividade?';
+    descInput.value = extra.atividade;
+    descRow.appendChild(descInput);
+    const badgeEl = statusBadgeEl(extra.status || 'Pendente');
+    descRow.appendChild(badgeEl);
+    row.appendChild(descRow);
+
+    // data de criação + dias de atraso (calculado a partir de quando ela foi
+    // postada pela primeira vez — "puxar pendências de ontem" preserva essa data)
+    const metaEl = document.createElement('div');
+    metaEl.className = 'extra-meta';
+    const criadaEm = extra.dataCriacao || dataAtual;
+    const diasAtraso = Math.max(diasEntre(criadaEm, dataAtual), 0);
+    metaEl.appendChild(document.createTextNode(`📅 Postada em ${formatarDataCurta(criadaEm)}`));
+    if (extra.status !== 'Concluída' && diasAtraso > 0){
+      const atrasoEl = document.createElement('span');
+      const critico = diasAtraso >= 7;
+      atrasoEl.className = 'atraso-badge ' + (critico ? 'atraso-critico' : diasAtraso >= 4 ? 'atraso-alto' : diasAtraso >= 2 ? 'atraso-medio' : 'atraso-baixo');
+      atrasoEl.textContent = `${critico ? '🔥' : '⏳'} ${diasAtraso} dia(s) de atraso`;
+      metaEl.appendChild(atrasoEl);
+    }
+    if (!extra.criticidade){
+      const semCritEl = document.createElement('span');
+      semCritEl.style.cssText = 'color:#9a3b12; font-weight:bold;';
+      semCritEl.textContent = '⚑ defina a criticidade';
+      metaEl.appendChild(semCritEl);
+    }
+    row.appendChild(metaEl);
+
+    // criticidade
+    const critRow = document.createElement('div');
+    critRow.className = 'criticidade-row';
+    ['Baixa','Média','Alta'].forEach(nivel => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'crit-chip' + (extra.criticidade === nivel ? ' ativa-' + (nivel === 'Média' ? 'media' : nivel.toLowerCase()) : '');
+      chip.textContent = nivel;
+      chip.addEventListener('click', () => enqueueSave('extra:'+extra._key, () => salvarCriticidadeExtra(extra, nivel)));
+      critRow.appendChild(chip);
+    });
+    row.appendChild(critRow);
+
+    const campoInicio = document.createElement('div');
+    campoInicio.className = 'atividade-campo';
+    campoInicio.innerHTML = '<span>Início</span>';
+    const inputInicio = document.createElement('input');
+    inputInicio.type = 'time';
+    inputInicio.value = extra.horaInicio || '';
+    campoInicio.appendChild(inputInicio);
+    row.appendChild(campoInicio);
+
+    const campoTermino = document.createElement('div');
+    campoTermino.className = 'atividade-campo';
+    campoTermino.innerHTML = '<span>Término</span>';
+    const inputTermino = document.createElement('input');
+    inputTermino.type = 'time';
+    inputTermino.value = extra.horaTermino || '';
+    campoTermino.appendChild(inputTermino);
+    row.appendChild(campoTermino);
+
+    const removerBtn = document.createElement('button');
+    removerBtn.type = 'button';
+    removerBtn.className = 'remover-btn';
+    removerBtn.textContent = '✕ remover';
+    removerBtn.addEventListener('click', () => iniciarRemocaoExtra(removerBtn, extra));
+    row.appendChild(removerBtn);
+
+    if (extra.observacao){
+      const notaEl = document.createElement('div');
+      notaEl.className = 'obs-nota';
+      notaEl.textContent = '📝 ' + extra.observacao;
+      row.appendChild(notaEl);
+    }
+
+    const salvarSemObs = () => enqueueSave('extra:'+extra._key, () => salvarExtra(extra, descInput.value, inputInicio.value, inputTermino.value, badgeEl));
+    descInput.addEventListener('change', salvarSemObs);
+    inputInicio.addEventListener('change', salvarSemObs);
+    inputTermino.addEventListener('change', async () => {
+      let resultado = {observacao: undefined, criarExtra: false};
+      if (inputTermino.value){
+        resultado = await abrirModalObservacao(extra.observacao, descInput.value || 'Atividade extra', false);
+      }
+      enqueueSave('extra:'+extra._key, () => salvarExtra(extra, descInput.value, inputInicio.value, inputTermino.value, badgeEl, resultado.observacao));
+    });
+
+    wrap.appendChild(row);
+  });
+}
+
+async function salvarExtra(extra, atividade, horaInicio, horaTermino, badgeEl, observacao){
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+  if (!atividade.trim()){ toast("Descreva a atividade extra antes de salvar"); return; }
+  const payload = {
+    id: extra.id,
+    data: dataAtual,
+    tipo: 'Extra',
+    atividade, horaInicio, horaTermino,
+    criticidade: extra.criticidade || '',
+    dataCriacao: extra.dataCriacao || dataAtual
+  };
+  if (observacao !== undefined) payload.observacao = observacao;
+  try{
+    const data = await jsonpRequest(url, {action:'salvarAtividade', payload: JSON.stringify(payload)});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    extra.id = data.id;
+    extra.atividade = atividade;
+    extra.horaInicio = horaInicio;
+    extra.horaTermino = horaTermino;
+    extra.status = data.status;
+    extra.observacao = data.observacao || '';
+    extra.criticidade = data.criticidade || extra.criticidade;
+    extra.dataCriacao = data.dataCriacao || extra.dataCriacao;
+    if (badgeEl) atualizarBadgeEl(badgeEl, data.status);
+    renderExtraProgress();
+    renderResumo();
+    toast("Salvo ✔");
+  }catch(err){
+    toast("Erro ao salvar: " + err.message);
+  }
+}
+
+async function salvarCriticidadeExtra(extra, nivel){
+  if (!extra.atividade || !extra.atividade.trim()){
+    toast("Descreva a atividade antes de definir a criticidade");
+    return;
+  }
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+  const payload = {
+    id: extra.id,
+    data: dataAtual,
+    tipo: 'Extra',
+    atividade: extra.atividade,
+    horaInicio: extra.horaInicio,
+    horaTermino: extra.horaTermino,
+    criticidade: nivel,
+    dataCriacao: extra.dataCriacao || dataAtual
+  };
+  try{
+    const data = await jsonpRequest(url, {action:'salvarAtividade', payload: JSON.stringify(payload)});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    extra.id = data.id;
+    extra.criticidade = nivel;
+    extrasLocais = ordenarExtras(extrasLocais);
+    renderExtras();
+    toast("Criticidade: " + nivel);
+  }catch(err){
+    toast("Erro ao salvar criticidade: " + err.message);
+  }
+}
+
+// Extra criada hoje e sem nada acumulado: remove direto. Extra com dias de
+// atraso já acumulados: pede confirmação inline antes, pra um toque errado
+// não jogar fora um histórico de vários dias.
+function iniciarRemocaoExtra(btnEl, extra){
+  const criadaEm = extra.dataCriacao || dataAtual;
+  const temHistorico = criadaEm !== dataAtual;
+  if (!temHistorico){
+    enqueueSave('extra:'+extra._key, () => removerExtra(extra));
+    return;
+  }
+  const dias = Math.max(diasEntre(criadaEm, dataAtual), 0);
+  const row = document.createElement('span');
+  row.className = 'excluir-opcoes';
+  row.innerHTML = `
+    <span style="font-size:.7rem; color:var(--vermelho); font-weight:bold;">${dias} dia(s) — remover mesmo assim?</span>
+    <button type="button" class="excluir-sempre-btn">Remover</button>
+    <button type="button" class="excluir-cancel-btn">✕</button>
+  `;
+  btnEl.replaceWith(row);
+  row.querySelector('.excluir-cancel-btn').onclick = () => row.replaceWith(btnEl);
+  row.querySelector('.excluir-sempre-btn').onclick = () => enqueueSave('extra:'+extra._key, () => removerExtra(extra));
+}
+
+async function removerExtra(extra){
+  if (extra.id){
+    const url = getScriptUrl();
+    if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+    try{
+      const data = await jsonpRequest(url, {action:'excluirAtividade', id: extra.id});
+      if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    }catch(err){
+      toast("Erro ao remover: " + err.message);
+      return;
+    }
+  }
+  const idx = extrasLocais.indexOf(extra);
+  if (idx !== -1) extrasLocais.splice(idx, 1);
+  renderExtras();
+  renderResumo();
+  toast("Removido");
+}
+
+async function marcarPendentesComoNaoRealizadas(tipo){
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+
+  // Manda pro backend só o que o próprio app está mostrando como Pendente
+  // agora, e nunca inclui atividades essenciais — elas ficam pendentes de
+  // propósito, pra você não perder de vista que precisa fazer.
+  let itens;
+  let bloqueadasEssenciais = 0;
+  if (tipo === 'Padrão'){
+    itens = ATIVIDADES_PADRAO.filter(nome => {
+      const e = buscarEntradaPadrao(nome);
+      const pendente = !e || e.status === 'Pendente';
+      if (!pendente) return false;
+      if (ehEssencial(nome)){ bloqueadasEssenciais++; return false; }
+      return true;
+    });
+  } else {
+    itens = extrasLocais.filter(e => e.id && e.status === 'Pendente').map(e => e.id);
+  }
+
+  if (itens.length === 0){
+    if (bloqueadasEssenciais > 0){ toast(`${bloqueadasEssenciais} essencial(is) continuam pendente(s) — não foram marcadas`); }
+    else toast("Nada pendente para marcar");
+    return;
+  }
+
+  try{
+    const data = await jsonpRequest(url, {action:'marcarPendentesComoNaoRealizadas', data: dataAtual, tipo, itens: JSON.stringify(itens)});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    await carregarDiario();
+    toast(bloqueadasEssenciais > 0 ? `${itens.length} marcada(s) · ${bloqueadasEssenciais} essencial(is) continuam pendente(s)` : "Atualizado");
+  }catch(err){
+    toast("Erro: " + err.message);
+  }
+}
+
+async function puxarExtrasDeOntem(){
+  const url = getScriptUrl();
+  if (!url) { toast("Configure a URL do Apps Script primeiro"); return; }
+  try{
+    const data = await jsonpRequest(url, {action:'puxarExtrasDeOntem', data: dataAtual});
+    if (!data.ok) throw new Error(data.erro || "erro desconhecido");
+    if (data.criadas > 0){
+      await carregarDiario();
+      toast(`${data.criadas} atividade(s) trazida(s) de ontem`);
+    } else {
+      toast("Nada pendente ontem pra trazer");
+    }
+  }catch(err){
+    toast("Erro: " + err.message);
+  }
+}
+
+// init
+carregarAtividadesPadrao();
+</script>
+</body>
+</html>
